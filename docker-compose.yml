@@ -2,39 +2,32 @@ version: '2'
 
 services:
 
- nginx:
-   image: nginx:alpine
-   ports:
-     - '8082:8082'
-   volumes:
-     - './conf/nginx.conf:/etc/nginx/nginx.conf:ro'
-     - './logs/:/var/log/nginx'
-   links:
-     - 'moodle'
-   volumes_from:
-     - 'moodle'
-
- moodle_db:
-  image: postgres:9-alpine
-  volumes:
-    - './data/db:/var/lib/postgresql/data'
-    - './data/moodle/www:/var/www/html'
-  environment:
-    POSTGRES_DB: 'db'
-    POSTGRES_USER: 'admin'
-    POSTGRES_PASSWORD: 'admin'
-
- moodle:
-    image: ellakcy/moodle:postgresql_fpm_alpine_202207092031
+  moodle_db:
+    image: postgres:9-alpine
+    ports:
+      - '8082:8082'
     volumes:
-      - './data/moodle:/var/moodledata'
-    links:
-      - 'moodle_db'
+      - './data/db:/var/lib/postgresql/data'
     environment:
-      MOODLE_URL: localhost/
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+
+  moodle:
+    image: ellakcy/moodle:postgresql_apache
+    volumes:
+      - './data/moodle/data:/var/moodledata'
+      - './data/moodle/www:/var/www/html'
+    ports:
+      - '8082:80'
+    links:
+      - moodle_db
+    environment:
+      MOODLE_URL: http://localhost:8082
       MOODLE_ADMIN: admin
       MOODLE_ADMIN_PASSWORD: admin
-      MOODLE_ADMIN_EMAIL: admin@admin.ca
-      MOODLE_DB_HOST: 'moodle_db'
-      MOODLE_DB_USER: admin
-      MOODLE_DB_PASSWORD: admin
+      MOODLE_ADMIN_EMAIL: admin@ontario.ca
+      MOODLE_DB_HOST: "moodle_db"
+      MOODLE_DB_USER: user
+      MOODLE_DB_PASSWORD: password
+      MOODLE_DB_NAME: db
