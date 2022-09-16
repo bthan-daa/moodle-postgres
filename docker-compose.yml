@@ -1,37 +1,39 @@
 version: '2'
 services:
-  postgres:
-    image: docker.io/bitnami/postgresql:latest
+  mariadb:
+    image: 'mariadb:10'
+    container_name: db
     environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - POSTGRES_USER=bn_moodle
-      - POSTGRES_DATABASE=bitnami_moodle
-      - POSTGRES_CHARACTER_SET=utf8mb4
-      - POSTGRES_COLLATE=utf8mb4_unicode_ci
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD: moodlePassword
     volumes:
-      - 'postgres_data:/bitnami/postgres'
+      - $HOME/volumes/mysql:/var/lib/mysql
+
   moodle:
-    image: docker.io/bitnami/moodle:4
-    ports:
-      - '8080:8080'
-      - '8443:8443'
+    image: 'bitnami/moodle:3'
+    container_name: moodle
     environment:
-      - MOODLE_DATABASE_HOST=postgres
-      - MOODLE_DATABASE_PORT_NUMBER=3306
-      - MOODLE_DATABASE_USER=bn_moodle
-      - MOODLE_DATABASE_NAME=bitnami_moodle
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
+      MOODLE_USERNAME: programster
+      MOODLE_PASSWORD: thisIsMyMoodleLoginPassword
+      MOODLE_EMAIL: admin@programster.org
+      MARIADB_HOST: db
+      MARIADB_PORT_NUMBER: 3306
+      MOODLE_DATABASE_USER: moodle
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_PASSWORD: moodlePassword
+      ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - '80:80'
+      - '443:443'
     volumes:
-      - 'moodle_data:/bitnami/moodle'
-      - 'moodledata_data:/bitnami/moodledata'
+      - $HOME/volumes/moodle:/bitnami'
     depends_on:
-      - postgres
+      - mariadb
+
 volumes:
-  postgres_data:
+  mariadb_data:
     driver: local
   moodle_data:
-    driver: local
-  moodledata_data:
     driver: local
