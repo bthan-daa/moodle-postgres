@@ -1,37 +1,40 @@
-version: '3'
+version: '2'
+
 services:
-  postgres:
-    image: postgres
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - POSTGRES_USER=bn_moodle
-      - POSTGRES_DATABASE=daa_moodle
+
+ nginx:
+   image: nginx:alpine
+   ports:
+     - '8082:8082'
+   volumes:
+     - './conf/nginx.conf:/etc/nginx/nginx.conf:ro'
+     - './logs/:/var/log/nginx'
+   links:
+     - 'moodle'
+   volumes_from:
+     - 'moodle'
+
+ moodle_db:
+  image: postgres:9-alpine
+  volumes:
+    - './data/db:/var/lib/postgresql/data'
+    - './data/moodle/www:/var/www/html'
+  environment:
+    POSTGRES_DB: 'db'
+    POSTGRES_USER: 'admin'
+    POSTGRES_PASSWORD: 'admin'
+
+ moodle:
+    image: ellakcy/moodle:postgresql_fpm_alpine_202207092031
     volumes:
-      - 'postgres_data:/daa/postgres'
-    ports:
-      - '5432:5432'
-  moodle:
-    image: moodlehq/moodle-php-apache
-    ports:
-      - '80:8080'
-      - '443:8443'
+      - './data/moodle:/var/moodledata'
+    links:
+      - 'moodle_db'
     environment:
-      - MOODLE_DATABASE_HOST=postgres
-      - MOODLE_DATABASE_PORT_NUMBER=3306
-      - MOODLE_DATABASE_USER=bn_moodle
-      - MOODLE_DATABASE_NAME=daa_moodle
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-    volumes:
-      - 'moodle_data:/daa/moodle'
-      - 'moodledata_data:/daa/moodledata'
-    depends_on:
-      - postgres
-volumes:
-  postgres_data:
-    driver: local
-  moodle_data:
-    driver: local
-  moodledata_data:
-    driver: local
+      MOODLE_URL: localhost/
+      MOODLE_ADMIN: admin
+      MOODLE_ADMIN_PASSWORD: admin
+      MOODLE_ADMIN_EMAIL: admin@admin.ca
+      MOODLE_DB_HOST: 'moodle_db'
+      MOODLE_DB_USER: admin
+      MOODLE_DB_PASSWORD: admin
